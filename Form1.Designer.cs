@@ -1,4 +1,6 @@
-﻿namespace UCH_Project
+﻿using UCH_Project.Classes;
+
+namespace UCH_Project
 {
     partial class Form1
     {
@@ -32,9 +34,12 @@
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1902, 1033);
+            ClientSize = new Size(1664, 775);
+            Margin = new Padding(3, 2, 3, 2);
+            MaximumSize = new Size(1680, 814);
+            MinimumSize = new Size(1680, 814);
             Name = "Form1";
             Text = "Form1";
             ResumeLayout(false);
