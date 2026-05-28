@@ -12,7 +12,7 @@ namespace UCH_Project.Classes
 {
     public class Player : GameObject
     {
-        public int Width { get; set; } = 40;
+        public int Width { get; set; } = 50;
         public int Height { get; set; } = 50;
 
         private int moveSpeed = 6;
@@ -29,9 +29,13 @@ namespace UCH_Project.Classes
             this.X = startX;
             this.Y = startY;
         }
-
-        public void SetMovingLeft(bool isMoving) => IsLeft = isMoving;
-        public void SetMovingRight(bool isMoving) => IsRight = isMoving;
+        
+        public void SetMovingLeft(bool isMoving){
+            IsLeft = isMoving;    
+        }
+        public void SetMovingRight(bool isMoving) {
+            IsRight = isMoving;
+        }
 
         public void Update()
         {
