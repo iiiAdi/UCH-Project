@@ -27,6 +27,15 @@ namespace UCH_Project
 
             this.KeyDown += Form1_KeyDown;
             this.KeyUp += Form1_KeyUp;
+
+            Platform woodFloor = new Platform(50, 600, 196, 26, Platform.PlatformType.WoodHorizontal);
+            gameObjects.Add(woodFloor);
+
+            Platform woodWall = new Platform(400, 300, 26, 191, Platform.PlatformType.WoodVertical);
+            gameObjects.Add(woodWall);
+
+            Platform metalBlock = new Platform(600, 300, 50, 50, Platform.PlatformType.MetalBox);
+            gameObjects.Add(metalBlock);
         }
 
         private void GameTimer_Tick(object? sender, EventArgs e)
@@ -68,5 +77,6 @@ namespace UCH_Project
             if (e.KeyCode == Keys.A || e.KeyCode == Keys.Left) player.SetMovingLeft(false);
             if (e.KeyCode == Keys.D || e.KeyCode == Keys.Right) player.SetMovingRight(false);
         }
+
     }
 }
