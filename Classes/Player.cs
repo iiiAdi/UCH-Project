@@ -1,12 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
-using System.Windows.Forms;
-
 
 namespace UCH_Project.Classes
 {
@@ -41,7 +35,7 @@ namespace UCH_Project.Classes
         public void SetMovingRight(bool isMoving) => IsRight = isMoving;
 
         // Updates the movement of the player
-        public void Update(List<GameObject> worldObjects, Size screenBounds)
+        public override void Update(List<GameObject> worldObjects, Size screenBounds)
         {
             if (IsLeft) X -= moveSpeed;
             if (IsRight) X += moveSpeed;
@@ -62,6 +56,9 @@ namespace UCH_Project.Classes
 
             CheckVerticalCollisions(worldObjects);
 
+          
+            CheckHazardCollisions(worldObjects, screenBounds);
+
             if (Y > screenBounds.Height)
             {
                 Respawn(screenBounds);
@@ -75,6 +72,8 @@ namespace UCH_Project.Classes
             }
 
             WantsToJump = false;
+
+            CheckGoalCollision(worldObjects, screenBounds);
         }
 
         private void CheckHorizontalCollisions(List<GameObject> worldObjects)
@@ -125,6 +124,40 @@ namespace UCH_Project.Classes
             }
         }
 
+       
+        private void CheckHazardCollisions(List<GameObject> worldObjects, Size screenBounds)
+        {
+            foreach (GameObject obj in worldObjects)
+            {
+                if (obj is ActionObject hazard)
+                {
+                    if (this.Bounds.IntersectsWith(hazard.Bounds))
+                    {
+                        Respawn(screenBounds);
+                        return;
+                    }
+                }
+            }
+        }
+        
+        private void CheckGoalCollision(List<GameObject> worldObjects, Size screenBounds)
+        {
+            foreach (GameObject obj in worldObjects)
+            {
+                // בודקים אם האובייקט הספציפי הזה ברשימה הוא מסוג מטרה
+                if (obj is Goal goal)
+                {
+                    // אם יש חפיפה בין השחקן למטרה - יש ניצחון
+                    if (this.Bounds.IntersectsWith(goal.Bounds))
+                    {
+                        // בינתיים נציג הודעה פשוטה ונחזיר את השחקן להתחלה
+                        MessageBox.Show("כל הכבוד! הגעת למטרה!");
+                        Respawn(screenBounds);
+                        return;
+                    }
+                }
+            }
+        }
         public override void Draw(Graphics g)
         {
             g.FillRectangle(Brushes.Blue, X, Y, Width, Height);

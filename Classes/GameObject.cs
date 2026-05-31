@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 
 namespace UCH_Project
@@ -10,5 +11,10 @@ namespace UCH_Project
         public int Y { get; set; }
 
         public abstract void Draw(Graphics g);
+
+        public abstract void Update(List<GameObject> worldObjects, Size screenBounds);
+
+        public bool IsDestroyed { get; set; } = false;
     }
+
 }

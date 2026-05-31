@@ -36,11 +36,34 @@ namespace UCH_Project
 
             Platform metalBlock = new Platform(600, 300, 50, 50, Platform.PlatformType.MetalBox);
             gameObjects.Add(metalBlock);
+
+            // creating hazard
+            MovingHazard movingSaw = new MovingHazard(400, 400, 40, 40, 5);
+
+          
+            gameObjects.Add(movingSaw);
+
+            Goal endGoal = new Goal(700, 250, 40, 40);
+
+            // הוספת המטרה לרשימת האובייקטים
+            gameObjects.Add(endGoal);
+
+            // הוספת מלכודת
+            ProjectileTrap trap = new ProjectileTrap(50, 200, 40, 40, 60, 7);
+            gameObjects.Add(trap);
         }
 
         private void GameTimer_Tick(object? sender, EventArgs e)
         {
-            player.Update(gameObjects, this.ClientSize);
+            // שימוש בלולאת for מאפשר לאובייקטים להוסיף קליעים חדשים לסוף הרשימה תוך כדי הריצה
+            for (int i = 0; i < gameObjects.Count; i++)
+            {
+                gameObjects[i].Update(gameObjects, this.ClientSize);
+            }
+
+            // ניקוי אובייקטים שסומנו למחיקה (למשל קליעים שיצאו מהמסך)
+            gameObjects.RemoveAll(obj => obj.IsDestroyed);
+
             this.Invalidate();
         }
 
