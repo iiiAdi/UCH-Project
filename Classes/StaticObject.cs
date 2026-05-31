@@ -19,5 +19,9 @@ namespace UCH_Project.Classes
             this.Width = width;
             this.Height = height;
         }
+        public Rectangle Bounds
+        {
+            get { return new Rectangle(X, Y, Width, Height); }
+        }
     }
 }

@@ -40,7 +40,7 @@ namespace UCH_Project
 
         private void GameTimer_Tick(object? sender, EventArgs e)
         {
-            player.Update();
+            player.Update(gameObjects, this.ClientSize);
             this.Invalidate();
         }
 
@@ -76,6 +76,7 @@ namespace UCH_Project
         {
             if (e.KeyCode == Keys.A || e.KeyCode == Keys.Left) player.SetMovingLeft(false);
             if (e.KeyCode == Keys.D || e.KeyCode == Keys.Right) player.SetMovingRight(false);
+            if (e.KeyCode == Keys.Space || e.KeyCode == Keys.W) player.WantsToJump = false;
         }
 
     }
