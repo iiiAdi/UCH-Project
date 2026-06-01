@@ -30,20 +30,37 @@ namespace UCH_Project
         /// </summary>
         private void InitializeComponent()
         {
+            StartButton = new HoverButton();
+            ((System.ComponentModel.ISupportInitialize)StartButton).BeginInit();
             SuspendLayout();
+            // 
+            // StartButton
+            // 
+            StartButton.BackColor = Color.Transparent;
+            StartButton.Image = Properties.Resources.StartButton;
+            StartButton.Location = new Point(758, 513);
+            StartButton.Name = "StartButton";
+            StartButton.Size = new Size(231, 109);
+            StartButton.SizeMode = PictureBoxSizeMode.StretchImage;
+            StartButton.TabIndex = 1;
+            StartButton.TabStop = false;
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1899, 1023);
-            MaximumSize = new Size(1917, 1070);
-            MinimumSize = new Size(1917, 1018);
+            ClientSize = new Size(1663, 767);
+            Controls.Add(StartButton);
+            Margin = new Padding(3, 2, 3, 2);
+            MaximumSize = new Size(1679, 812);
+            MinimumSize = new Size(1679, 773);
             Name = "Form1";
             Text = "Form1";
+            ((System.ComponentModel.ISupportInitialize)StartButton).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
+        private HoverButton StartButton;
     }
 }

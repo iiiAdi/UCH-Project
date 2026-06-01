@@ -11,8 +11,11 @@ namespace UCH_Project.Classes
         private Image platformImage;
         public enum PlatformType { WoodHorizontal, WoodVertical , MetalBox}
 
+        public PlatformType Type { get; private set; }
         public Platform(int x, int y, int width, int height, PlatformType type): base(x, y, width, height)
         {
+            this.Type = type;
+
             switch (type)
             {
                 case PlatformType.WoodHorizontal:

@@ -5,6 +5,7 @@ using System.Text;
 
 namespace UCH_Project
 {
+    [Serializable]
     public abstract class GameObject
     {
         public int X { get; set; }

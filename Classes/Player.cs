@@ -17,6 +17,8 @@ namespace UCH_Project.Classes
         public bool IsRight { get; private set; }
         public bool IsJumping { get; private set; }
         public bool IsOnGround { get; set; }
+        public bool HasWonRound { get; set; } = false;
+        public bool IsDead { get; set; } = false;
         public Rectangle Bounds => new Rectangle(X, Y, Width, Height);
         public bool WantsToJump { get; set; } = false;
 
@@ -61,7 +63,7 @@ namespace UCH_Project.Classes
 
             if (Y > screenBounds.Height)
             {
-                Respawn(screenBounds);
+                IsDead = true;
             }
 
             if (WantsToJump && IsOnGround)
@@ -124,7 +126,7 @@ namespace UCH_Project.Classes
             }
         }
 
-       
+
         private void CheckHazardCollisions(List<GameObject> worldObjects, Size screenBounds)
         {
             foreach (GameObject obj in worldObjects)
@@ -133,31 +135,28 @@ namespace UCH_Project.Classes
                 {
                     if (this.Bounds.IntersectsWith(hazard.Bounds))
                     {
-                        Respawn(screenBounds);
+                        IsDead = true;
                         return;
                     }
                 }
             }
         }
-        
+
         private void CheckGoalCollision(List<GameObject> worldObjects, Size screenBounds)
         {
             foreach (GameObject obj in worldObjects)
             {
-                // בודקים אם האובייקט הספציפי הזה ברשימה הוא מסוג מטרה
                 if (obj is Goal goal)
                 {
-                    // אם יש חפיפה בין השחקן למטרה - יש ניצחון
                     if (this.Bounds.IntersectsWith(goal.Bounds))
                     {
-                        // בינתיים נציג הודעה פשוטה ונחזיר את השחקן להתחלה
-                        MessageBox.Show("כל הכבוד! הגעת למטרה!");
-                        Respawn(screenBounds);
+                        HasWonRound = true;
                         return;
                     }
                 }
             }
         }
+
         public override void Draw(Graphics g)
         {
             g.FillRectangle(Brushes.Blue, X, Y, Width, Height);

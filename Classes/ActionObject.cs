@@ -4,6 +4,7 @@ using System.Drawing;
 
 namespace UCH_Project.Classes
 {
+    [Serializable]
     public abstract class ActionObject : GameObject
     {
         public int Width { get; set; }

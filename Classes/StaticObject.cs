@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace UCH_Project.Classes
 {
+    [Serializable]
     public abstract class StaticObject : GameObject
     {
         public int Width { get; set; }
