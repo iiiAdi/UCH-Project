@@ -21,11 +21,12 @@ namespace UCH_Project.Classes
         public bool IsDead { get; set; } = false;
         public Rectangle Bounds => new Rectangle(X, Y, Width, Height);
         public bool WantsToJump { get; set; } = false;
-
-        public Player(int startX, int startY)
+        public Brush PlayerColor { get; set; }
+        public Player(int startX, int startY, Brush color)
         {
             this.X = startX;
             this.Y = startY;
+            this.PlayerColor = color;
         }
 
         public void Jump()
@@ -39,26 +40,21 @@ namespace UCH_Project.Classes
         // Updates the movement of the player
         public override void Update(List<GameObject> worldObjects, Size screenBounds)
         {
+            // אם השחקן מת או ניצח, הוא מפסיק להיות מושפע מהפיזיקה ומהעולם
+            if (IsDead || HasWonRound) return;
+
             if (IsLeft) X -= moveSpeed;
             if (IsRight) X += moveSpeed;
 
             CheckHorizontalCollisions(worldObjects);
 
-            if (X < 0)
-            {
-                X = 0;
-            }
-            if (X > screenBounds.Width - this.Width)
-            {
-                X = screenBounds.Width - this.Width;
-            }
+            if (X < 0) X = 0;
+            if (X > screenBounds.Width - this.Width) X = screenBounds.Width - this.Width;
 
             Y += jumpSpeed;
             jumpSpeed += gravity;
 
             CheckVerticalCollisions(worldObjects);
-
-          
             CheckHazardCollisions(worldObjects, screenBounds);
 
             if (Y > screenBounds.Height)
@@ -77,7 +73,6 @@ namespace UCH_Project.Classes
 
             CheckGoalCollision(worldObjects, screenBounds);
         }
-
         private void CheckHorizontalCollisions(List<GameObject> worldObjects)
         {
             foreach (GameObject obj in worldObjects)
@@ -159,7 +154,11 @@ namespace UCH_Project.Classes
 
         public override void Draw(Graphics g)
         {
-            g.FillRectangle(Brushes.Blue, X, Y, Width, Height);
+            // שחקן שנפסל לא יצויר על המסך
+            if (IsDead) return;
+
+            // ציור השחקן לפי הצבע הייחודי שלו
+            g.FillRectangle(PlayerColor, X, Y, Width, Height);
         }
 
         private void Respawn(Size screenBounds)

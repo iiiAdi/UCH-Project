@@ -8,7 +8,7 @@ namespace UCH_Project
         private GameState currentState = GameState.Menu;
 
         private readonly int gridSize = 40; // Grid 40 x 40
-        
+
         // Starter Width and Height for placement objects
         private int selectedWidth = 40;
         private int selectedHeight = 40;
@@ -22,13 +22,15 @@ namespace UCH_Project
         private List<GameObject> gameObjects = new List<GameObject>();
         private List<GameObject> partyBoxOptions = new List<GameObject>();
 
-        private Player player;
+        private Player player1;
+        private Player player2;
         private System.Windows.Forms.Timer gameTimer;
         private Image cachedBackground;
         private Image cachedMenuDesign;
         private Image cachedPartyBox;
         private bool isPartyBoxOpen = false;
-
+        private int itemsPlacedThisRound = 0;
+        private bool isPlacingNewItem = false; // מבדיל בין בחירת חפץ חדש מהתיבה לבין הזזת חפץ קיים
         private string selectedObjectType = "";
         private Platform.PlatformType selectedPlatformType;
 
@@ -41,13 +43,7 @@ namespace UCH_Project
             cachedBackground = Properties.Resources.fitBackground;
             cachedMenuDesign = Properties.Resources.Menu;
             cachedPartyBox = Properties.Resources.PartyBox;
-
-            player = new Player(100, 100);
-
             StartButton.Click += BtnStart_Click;
-
-            gameObjects.Add(player);
-
             gameTimer = new System.Windows.Forms.Timer();
             gameTimer.Interval = 15;
             gameTimer.Tick += GameTimer_Tick;
@@ -63,34 +59,33 @@ namespace UCH_Project
         {
             if (currentState == GameState.Playing)
             {
-               
+
                 for (int i = gameObjects.Count - 1; i >= 0; i--)
                 {
                     gameObjects[i].Update(gameObjects, this.ClientSize);
                 }
                 gameObjects.RemoveAll(obj => obj.IsDestroyed);
 
-               
-                if (player.HasWonRound)
+
+                // בדיקת ניצחון: אם לפחות אחד מהשחקנים הגיע למטרה
+                if (player1.HasWonRound || player2.HasWonRound)
                 {
                     gameTimer.Stop();
-
-                    MessageBox.Show("כל הכבוד! הגעת למטרה והרווחת נקודה!");
+                    string winner = player1.HasWonRound ? "שחקן 1 (כחול)" : "שחקן 2 (ורוד)";
+                    MessageBox.Show($"כל הכבוד! {winner} הגיע למטרה והרוויח נקודה!");
                     ResetRoundForNextBuilding();
-
                     gameTimer.Start();
-                    return; 
+                    return;
                 }
-              
-                else if (player.IsDead)
+
+                // בדיקת הפסד: השלב נכשל רק אם *שני* השחקנים מתו
+                if (player1.IsDead && player2.IsDead)
                 {
                     gameTimer.Stop();
-
-                    MessageBox.Show("אופס... המלכודות ניצחו הפעם!");
+                    MessageBox.Show("אופס... שני השחקנים נפסלו! המלכודות ניצחו.");
                     ResetRoundForNextBuilding();
-
                     gameTimer.Start();
-                    return; 
+                    return;
                 }
             }
 
@@ -192,38 +187,116 @@ namespace UCH_Project
 
         private void Form1_KeyDown(object? sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.A || e.KeyCode == Keys.Left) player.SetMovingLeft(true);
-            if (e.KeyCode == Keys.D || e.KeyCode == Keys.Right) player.SetMovingRight(true);
-            if (e.KeyCode == Keys.Space || e.KeyCode == Keys.W) player.Jump();
+            // --- שחקן 1 (חצים) ---
+            if (e.KeyCode == Keys.Left) player1.SetMovingLeft(true);
+            if (e.KeyCode == Keys.Right) player1.SetMovingRight(true);
+            if (e.KeyCode == Keys.Up) player1.Jump();
+
+            // --- שחקן 2 (WASD) ---
+            if (e.KeyCode == Keys.A) player2.SetMovingLeft(true);
+            if (e.KeyCode == Keys.D) player2.SetMovingRight(true);
+            if (e.KeyCode == Keys.W) player2.Jump();
+
             if (e.KeyCode == Keys.Enter && currentState == GameState.Building)
             {
                 currentState = GameState.Playing;
                 this.Invalidate();
             }
+
+            // --- חלון שמירת משחק (Ctrl + S) ---
+            if (e.KeyCode == Keys.S && e.Control)
+            {
+                using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+                {
+                    saveFileDialog.Filter = "Model Files (*.mdl)|*.mdl|All Files (*.*)|*.*";
+                    saveFileDialog.Title = "בחר היכן לשמור את השלב";
+                    saveFileDialog.DefaultExt = "mdl";
+
+                    // אם המשתמש בחר נתיב ולחץ "שמור"
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        LevelSerializer.SaveLevel(gameObjects, saveFileDialog.FileName);
+                        MessageBox.Show("השלב נשמר בהצלחה!");
+                    }
+                }
+            }
+
+            // --- חלון טעינת משחק (Ctrl + L) ---
+            if (e.KeyCode == Keys.L && e.Control)
+            {
+                using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                {
+                    openFileDialog.Filter = "Model Files (*.mdl)|*.mdl|All Files (*.*)|*.*";
+                    openFileDialog.Title = "בחר קובץ שלב לטעינה";
+
+                    // אם המשתמש בחר קובץ ולחץ "פתח"
+                    if (openFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        List<GameObject> loadedObjects = LevelSerializer.LoadLevel(openFileDialog.FileName);
+
+                        if (loadedObjects != null)
+                        {
+                            gameObjects = loadedObjects;
+
+                            // מתוך קטע הטעינה ב-Form1
+                            List<Player> loadedPlayers = new List<Player>();
+                            foreach (GameObject obj in gameObjects)
+                            {
+                                if (obj is Player p)
+                                {
+                                    loadedPlayers.Add(p);
+                                }
+                            }
+                            if (loadedPlayers.Count >= 2)
+                            {
+                                player1 = loadedPlayers[0];
+                                player2 = loadedPlayers[1];
+                            }
+
+                            MessageBox.Show("השלב נטען בהצלחה!");
+                            this.Invalidate();
+                        }
+                    }
+                }
+            }
         }
 
         private void Form1_KeyUp(object? sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.A || e.KeyCode == Keys.Left) player.SetMovingLeft(false);
-            if (e.KeyCode == Keys.D || e.KeyCode == Keys.Right) player.SetMovingRight(false);
-            if (e.KeyCode == Keys.Space || e.KeyCode == Keys.W) player.WantsToJump = false;
+            // --- שחקן 1 ---
+            if (e.KeyCode == Keys.Left) player1.SetMovingLeft(false);
+            if (e.KeyCode == Keys.Right) player1.SetMovingRight(false);
+            if (e.KeyCode == Keys.Up) player1.WantsToJump = false;
+
+            // --- שחקן 2 ---
+            if (e.KeyCode == Keys.A) player2.SetMovingLeft(false);
+            if (e.KeyCode == Keys.D) player2.SetMovingRight(false);
+            if (e.KeyCode == Keys.W) player2.WantsToJump = false;
         }
 
 
         private void ResetRoundForNextBuilding()
         {
-
             gameObjects.RemoveAll(obj => obj is Projectile);
 
-            player.X = 100;
-            player.Y = 500;
-            player.HasWonRound = false;
-            player.IsDead = false;
-            player.SetMovingLeft(false);
-            player.SetMovingRight(false);
+            player1.X = 100;
+            player1.Y = 475;
+            player1.HasWonRound = false;
+            player1.IsDead = false;
+            player1.SetMovingLeft(false);
+            player1.SetMovingRight(false);
+
+            player2.X = 150;
+            player2.Y = 475;
+            player2.HasWonRound = false;
+            player2.IsDead = false;
+            player2.SetMovingLeft(false);
+            player2.SetMovingRight(false);
 
             currentState = GameState.Building;
 
+            itemsPlacedThisRound = 0;
+            isPlacingNewItem = false;
             GeneratePartyBoxOptions();
 
             this.Focus();
@@ -277,8 +350,10 @@ namespace UCH_Project
                 {
                     if (e.Button == MouseButtons.Left)
                     {
-                        foreach (GameObject option in partyBoxOptions)
+                        // שימוש בלולאת for מאפשר לנו למחוק איברים מהרשימה בבטחה
+                        for (int i = 0; i < partyBoxOptions.Count; i++)
                         {
+                            GameObject option = partyBoxOptions[i];
                             int optW = 40;
                             int optH = 40;
 
@@ -313,7 +388,7 @@ namespace UCH_Project
                                 else if (option is MovingHazard)
                                 {
                                     selectedObjectType = "MovingHazard";
-                                    selectedWidth = 40; // תיקנתי לך ל-40 כדי שיישב בול ברשת
+                                    selectedWidth = 40;
                                     selectedHeight = 40;
                                 }
                                 else if (option is ProjectileTrap)
@@ -323,9 +398,14 @@ namespace UCH_Project
                                     selectedHeight = 40;
                                 }
 
-                                isPartyBoxOpen = false; // סוגרים את התיבה
+                                // מסירים את החפץ מהתיבה כדי שהשחקן השני יבחר ממה שנשאר
+                                partyBoxOptions.RemoveAt(i);
+
+                                isPartyBoxOpen = false; // סוגרים את התיבה זמנית כדי למקם את החפץ
+                                isPlacingNewItem = true; // מסמנים שלקחנו חפץ חדש
+
                                 this.Invalidate();
-                                return; // יוצאים כדי לחכות ללחיצה הבאה על המפה
+                                return;
                             }
                         }
                     }
@@ -336,10 +416,10 @@ namespace UCH_Project
                 // שלב ב': בנייה או מחיקה על המפה עצמה
                 // ==========================================
 
-                // חישוב נקודת העוגן לרשת
                 int snappedX = (e.X / gridSize) * gridSize;
                 int snappedY = (e.Y / gridSize) * gridSize;
 
+                // --- לוגיקת כפתור ימני (הזזת חפץ קיים) ---
                 if (e.Button == MouseButtons.Right)
                 {
                     Point clickPoint = e.Location;
@@ -375,12 +455,12 @@ namespace UCH_Project
                         selectedHeight = objectToPickUp is StaticObject st2 ? st2.Height : (objectToPickUp is ActionObject ac2 ? ac2.Height : 40);
 
                         gameObjects.Remove(objectToPickUp);
-
                         this.Invalidate();
                     }
                     return;
                 }
 
+                // --- לוגיקת כפתור שמאלי (הנחת חפץ) ---
                 if (e.Button == MouseButtons.Left)
                 {
                     if (IsGridSlotOccupied(snappedX, snappedY, selectedWidth, selectedHeight))
@@ -403,7 +483,20 @@ namespace UCH_Project
                             break;
                     }
 
-                    selectedObjectType = ""; 
+                    selectedObjectType = "";
+
+                    // בדיקה אם הרגע הנחנו חפץ חדש שהוצאנו מהתיבה
+                    if (isPlacingNewItem)
+                    {
+                        itemsPlacedThisRound++;
+                        isPlacingNewItem = false;
+
+                        // אם זה השחקן הראשון שהניח, נפתח את התיבה מחדש לשחקן השני!
+                        if (itemsPlacedThisRound < 2)
+                        {
+                            isPartyBoxOpen = true;
+                        }
+                    }
 
                     this.Invalidate();
                 }
@@ -437,30 +530,30 @@ namespace UCH_Project
             partyBoxOptions.Clear();
             Random rand = new Random();
 
-            // מיקומי X קבועים בתוך התיבה (עם רווחים שמתאימים לגדלים השונים)
             int[] optionXs = { 625, 825, 1025 };
-            int boxY = 320; // גובה ממורכז בתוך התיבה
+            int boxY = 320;
 
             for (int i = 0; i < 3; i++)
             {
-                int choice = rand.Next(4);
+                // שינוי ל-5 כדי לכלול את כל האפשרויות
+                int choice = rand.Next(5);
 
                 switch (choice)
                 {
-                    case 0: // קוביית מתכת
+                    case 0:
                         partyBoxOptions.Add(new Platform(optionXs[i], boxY, 40, 40, Platform.PlatformType.MetalBox));
                         break;
-
-                    case 1: // רצפת עץ אופקית (נצייר אותה קצת יותר למעלה כדי שתשב יפה בתיבה)
+                    case 1:
                         partyBoxOptions.Add(new Platform(optionXs[i] - 40, boxY + 20, 160, 40, Platform.PlatformType.WoodHorizontal));
                         break;
-
-                    case 2: // קיר עץ אנכי
+                    case 2:
                         partyBoxOptions.Add(new Platform(optionXs[i], boxY - 40, 40, 160, Platform.PlatformType.WoodVertical));
                         break;
-
-                    case 3: // מלכודת ירי - 40x40 (או מה הגודל האמיתי שלה אצלך)
+                    case 3:
                         partyBoxOptions.Add(new ProjectileTrap(optionXs[i], boxY, 40, 40, 60, 7));
+                        break;
+                    case 4: // הוספת המכשול הנע שיצרנו
+                        partyBoxOptions.Add(new MovingHazard(optionXs[i], boxY, 40, 40, 3));
                         break;
                 }
             }
@@ -468,13 +561,17 @@ namespace UCH_Project
             isPartyBoxOpen = true;
         }
 
-
         private void BtnStart_Click(object? sender, EventArgs e)
         {
             gameObjects.Clear();
 
-            player = new Player(100, 475);
-            gameObjects.Add(player);
+            // שחקן 1 (כחול) - ישחק עם החצים
+            player1 = new Player(100, 475, Brushes.Blue);
+            // שחקן 2 (ורוד) - ישחק עם WASD
+            player2 = new Player(150, 475, Brushes.DeepPink);
+
+            gameObjects.Add(player1);
+            gameObjects.Add(player2);
 
             // Setup starting ground
             Platform startingGround = new Platform(40, 520, 200, 40, Platform.PlatformType.MetalFloor);
@@ -485,6 +582,8 @@ namespace UCH_Project
             currentState = GameState.Building;
             StartButton.Visible = false;
 
+            itemsPlacedThisRound = 0;
+            isPlacingNewItem = false;
             GeneratePartyBoxOptions(); // Generating party box options
 
             this.Focus();
