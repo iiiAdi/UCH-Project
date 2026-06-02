@@ -9,7 +9,7 @@ namespace UCH_Project.Classes
     public class Platform : StaticObject
     {
         private Image platformImage;
-        public enum PlatformType { WoodHorizontal, WoodVertical , MetalBox}
+        public enum PlatformType { WoodHorizontal, WoodVertical , MetalBox, MetalFloor}
 
         public PlatformType Type { get; private set; }
         public Platform(int x, int y, int width, int height, PlatformType type): base(x, y, width, height)
@@ -26,6 +26,9 @@ namespace UCH_Project.Classes
                     break;
                 case PlatformType.MetalBox:
                     platformImage = Properties.Resources.MetalBox;
+                    break;
+                case PlatformType.MetalFloor:
+                    platformImage = Properties.Resources.MetalBegin;
                     break;
                 default:
                     platformImage = null;

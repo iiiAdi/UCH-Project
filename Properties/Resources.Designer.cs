@@ -83,6 +83,16 @@ namespace UCH_Project.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap MetalBegin {
+            get {
+                object obj = ResourceManager.GetObject("MetalBegin", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap MetalBox {
             get {
                 object obj = ResourceManager.GetObject("MetalBox", resourceCulture);
