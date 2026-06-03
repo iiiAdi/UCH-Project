@@ -14,25 +14,24 @@ namespace UCH_Project.Classes
 
         public override void Update(List<GameObject> worldObjects, Size screenBounds)
         {
-            // קידום הקליע במרחב
+            // Make the projectile move right
             X += SpeedX;
 
-            // 1. בדיקה אם הקליע יצא מגבולות המסך
+            // Is the projectile still in screen bounds, if so destroy
             if (X < 0 || X > screenBounds.Width)
             {
                 this.IsDestroyed = true;
-                return; // יוצאים מהפונקציה מיד כדי לחסוך משאבי חישוב
+                return;
             }
 
-            // 2. בדיקת התנגשות עם פלטפורמות ומכשולים סטטיים
+            // if got hit on an object
             foreach (GameObject obj in worldObjects)
             {
-                // מוודאים שאנחנו לא בודקים התנגשות של הקליע עם עצמו, ושהאובייקט מולנו הוא קיר או רצפה
+                // If the object is a wall or floor, then it will be destroyed.
                 if (obj != this && obj is StaticObject staticObj && staticObj.IsCollidable)
                 {
                     if (this.Bounds.IntersectsWith(staticObj.Bounds))
-                    {
-                        // ברגע שיש פגיעה בקיר, מסמנים את הקליע למחיקה ויוצאים
+                    { 
                         this.IsDestroyed = true;
                         return;
                     }
@@ -42,7 +41,6 @@ namespace UCH_Project.Classes
 
         public override void Draw(Graphics g)
         {
-            // ציור הקליע
             g.FillEllipse(Brushes.Orange, X, Y, Width, Height);
         }
     }

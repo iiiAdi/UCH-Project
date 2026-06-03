@@ -31,25 +31,39 @@ namespace UCH_Project
         private void InitializeComponent()
         {
             StartButton = new HoverButton();
+            LoadButton = new HoverButton();
             ((System.ComponentModel.ISupportInitialize)StartButton).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)LoadButton).BeginInit();
             SuspendLayout();
             // 
             // StartButton
             // 
             StartButton.BackColor = Color.Transparent;
             StartButton.Image = Properties.Resources.StartButton;
-            StartButton.Location = new Point(758, 513);
+            StartButton.Location = new Point(755, 441);
             StartButton.Name = "StartButton";
             StartButton.Size = new Size(231, 109);
             StartButton.SizeMode = PictureBoxSizeMode.StretchImage;
             StartButton.TabIndex = 1;
             StartButton.TabStop = false;
             // 
+            // LoadButton
+            // 
+            LoadButton.BackColor = Color.Transparent;
+            LoadButton.Image = Properties.Resources.LoadButton;
+            LoadButton.Location = new Point(755, 556);
+            LoadButton.Name = "LoadButton";
+            LoadButton.Size = new Size(231, 109);
+            LoadButton.SizeMode = PictureBoxSizeMode.StretchImage;
+            LoadButton.TabIndex = 2;
+            LoadButton.TabStop = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1663, 767);
+            Controls.Add(LoadButton);
             Controls.Add(StartButton);
             Margin = new Padding(3, 2, 3, 2);
             MaximumSize = new Size(1679, 812);
@@ -57,10 +71,12 @@ namespace UCH_Project
             Name = "Form1";
             Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)StartButton).EndInit();
+            ((System.ComponentModel.ISupportInitialize)LoadButton).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
         private HoverButton StartButton;
+        private HoverButton LoadButton;
     }
 }

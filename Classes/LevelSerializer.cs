@@ -6,9 +6,7 @@ namespace UCH_Project.Classes
 {
     public static class LevelSerializer
     {
-        // ==========================================
-        // שמירת המשחק (מקבל נתיב כפרמטר)
-        // ==========================================
+        // Save the current level and positions of current objects
         public static void SaveLevel(List<GameObject> gameObjects, string filePath)
         {
             using (StreamWriter sw = new StreamWriter(filePath))
@@ -39,9 +37,8 @@ namespace UCH_Project.Classes
             }
         }
 
-        // ==========================================
-        // טעינת המשחק (מקבל נתיב כפרמטר)
-        // ==========================================
+           
+        // Load an existing save
         public static List<GameObject> LoadLevel(string filePath)
         {
             if (!File.Exists(filePath))
@@ -64,7 +61,6 @@ namespace UCH_Project.Classes
                 switch (type)
                 {
                     case "Player":
-                        // נזהה אם זה השחקן הראשון או השני לפי כמות השחקנים שכבר נטענו
                         bool isFirstPlayer = loadedObjects.FindAll(o => o is Player).Count == 0;
                         Brush pColor = isFirstPlayer ? Brushes.Blue : Brushes.DeepPink;
 

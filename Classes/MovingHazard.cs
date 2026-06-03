@@ -10,7 +10,6 @@ namespace UCH_Project.Classes
             : base(x, y, width, height)
         {
             this.SpeedX = speedX;
-            this.SpeedY = 0; // מוכן להרחבה עתידית אם תרצה מכשול שזז אנכית
         }
 
         public override void Update(List<GameObject> worldObjects, Size screenBounds)
@@ -30,7 +29,7 @@ namespace UCH_Project.Classes
                 SpeedX *= -1; //  changing direction from right to left
             }
 
-            // 2. checking collusion with obstacles
+            // 2. checking collision with objects
             foreach (GameObject obj in worldObjects)
             {
                 // checking collusion of objects with themselves

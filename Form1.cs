@@ -1,4 +1,6 @@
+using System.Security.Cryptography;
 using UCH_Project.Classes;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 namespace UCH_Project
 {
@@ -30,7 +32,7 @@ namespace UCH_Project
         private Image cachedPartyBox;
         private bool isPartyBoxOpen = false;
         private int itemsPlacedThisRound = 0;
-        private bool isPlacingNewItem = false; // מבדיל בין בחירת חפץ חדש מהתיבה לבין הזזת חפץ קיים
+        private bool isPlacingNewItem = false;
         private string selectedObjectType = "";
         private Platform.PlatformType selectedPlatformType;
 
@@ -44,6 +46,7 @@ namespace UCH_Project
             cachedMenuDesign = Properties.Resources.Menu;
             cachedPartyBox = Properties.Resources.PartyBox;
             StartButton.Click += BtnStart_Click;
+            LoadButton.Click += BtnLoad_Click;
             gameTimer = new System.Windows.Forms.Timer();
             gameTimer.Interval = 15;
             gameTimer.Tick += GameTimer_Tick;
@@ -67,22 +70,25 @@ namespace UCH_Project
                 gameObjects.RemoveAll(obj => obj.IsDestroyed);
 
 
-                // בדיקת ניצחון: אם לפחות אחד מהשחקנים הגיע למטרה
+                // If one of the player's reached the end and won
                 if (player1.HasWonRound || player2.HasWonRound)
                 {
                     gameTimer.Stop();
-                    string winner = player1.HasWonRound ? "שחקן 1 (כחול)" : "שחקן 2 (ורוד)";
-                    MessageBox.Show($"כל הכבוד! {winner} הגיע למטרה והרוויח נקודה!");
-                    ResetRoundForNextBuilding();
+                    string winner = player1.HasWonRound ? "1P [BLUE]" : "2P [PINK]";
+                    MessageBox.Show($"{winner} Has reached the end and won the game!");
+
+                    // Returning to the main menu
+                    ReturnToMainMenu();
                     gameTimer.Start();
                     return;
                 }
 
-                // בדיקת הפסד: השלב נכשל רק אם *שני* השחקנים מתו
+
+                //If both are dead
                 if (player1.IsDead && player2.IsDead)
                 {
                     gameTimer.Stop();
-                    MessageBox.Show("אופס... שני השחקנים נפסלו! המלכודות ניצחו.");
+                    MessageBox.Show("Both players eliminated! - Restarting");
                     ResetRoundForNextBuilding();
                     gameTimer.Start();
                     return;
@@ -97,13 +103,13 @@ namespace UCH_Project
             base.OnPaint(e);
             Graphics g = e.Graphics;
 
-            // 1. שכבה תחתונה: רקע המשחק
+            // first layer - background image
             if (cachedBackground != null)
             {
                 g.DrawImage(cachedBackground, 0, 0, this.ClientSize.Width, this.ClientSize.Height);
             }
 
-            // אם אנחנו בתפריט, מציירים אותו ויוצאים (אין טעם לצייר את שאר העולם)
+            // if in menu, we draw only the menu design.
             if (currentState == GameState.Menu)
             {
                 if (cachedMenuDesign != null)
@@ -113,8 +119,7 @@ namespace UCH_Project
                 return;
             }
 
-            // 2. שכבה אמצעית: כל האובייקטים הקיימים במפה (שחקן, קוביות, מלכודות)
-            // עכשיו הם יצויירו *לפני* התיבה, ולכן יהיו מתחתיה!
+            // Second layer, the players and the game objects.
             if (currentState == GameState.Playing || currentState == GameState.Building)
             {
                 foreach (GameObject obj in gameObjects)
@@ -123,23 +128,45 @@ namespace UCH_Project
                 }
             }
 
-            // 3. שכבה עליונה: UI של שלב הבנייה (רשת, תצוגה מקדימה, ותיבת המסיבה)
+            // Third layer, party box and items
             if (currentState == GameState.Building)
             {
                 if (isPartyBoxOpen)
                 {
-                    // ציור תיבת המסיבה (מצוירת אחרונה = נמצאת מעל הכל!)
+                    int boxY = 0;
+
                     if (cachedPartyBox != null)
                     {
                         int boxWidth = 953;
                         int boxHeight = 545;
                         int boxX = (this.ClientSize.Width - boxWidth) / 2;
-                        int boxY = (this.ClientSize.Height - boxHeight) / 2;
+                        boxY = (this.ClientSize.Height - boxHeight) / 2;
 
                         g.DrawImage(cachedPartyBox, boxX, boxY, boxWidth, boxHeight);
                     }
 
-                    // ציור האפשרויות בתוך התיבה
+                    string turnText = itemsPlacedThisRound == 0 ? "Player 1's Turn [BLUE]" : "Player 2's Turn [PINK]";
+                    Color textColor = itemsPlacedThisRound == 0 ? Color.DeepSkyBlue : Color.DeepPink;
+
+                    // Players turn painting
+                    using (Font turnFont = new Font("Impact", 36, FontStyle.Regular))
+                    {
+                        SizeF textSize = g.MeasureString(turnText, turnFont);
+                        float textX = (this.ClientSize.Width - textSize.Width) / 2;
+                        float textY = boxY - textSize.Height - 10;
+
+                        using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(150, 0, 0, 0)))
+                        {
+                            g.DrawString(turnText, turnFont, shadowBrush, textX + 3, textY + 3);
+                        }
+
+                        using (SolidBrush turnBrush = new SolidBrush(textColor))
+                        {
+                            g.DrawString(turnText, turnFont, turnBrush, textX, textY);
+                        }
+                    }
+
+                    // Paint for the party box option
                     foreach (GameObject option in partyBoxOptions)
                     {
                         option.Draw(g);
@@ -147,7 +174,7 @@ namespace UCH_Project
                 }
                 else
                 {
-                    // ציור רשת העזר לבנייה (Grid)
+                    // Make the building grid
                     using (Pen gridPen = new Pen(Color.FromArgb(40, Color.White), 1))
                     {
                         for (int x = 0; x < this.ClientSize.Width; x += gridSize)
@@ -160,7 +187,7 @@ namespace UCH_Project
                         }
                     }
 
-                    // ציור התצוגה המקדימה שעוקבת אחרי העכבר (ההצללית מהסעיף הקודם)
+                    // the green / red outline that indicates where you can build
                     if (!string.IsNullOrEmpty(selectedObjectType) && previewX != -1)
                     {
                         bool isOccupied = IsGridSlotOccupied(previewX, previewY, selectedWidth, selectedHeight);
@@ -187,12 +214,12 @@ namespace UCH_Project
 
         private void Form1_KeyDown(object? sender, KeyEventArgs e)
         {
-            // --- שחקן 1 (חצים) ---
+            // Players controls - 1P - OnKeyDown
             if (e.KeyCode == Keys.Left) player1.SetMovingLeft(true);
             if (e.KeyCode == Keys.Right) player1.SetMovingRight(true);
             if (e.KeyCode == Keys.Up) player1.Jump();
 
-            // --- שחקן 2 (WASD) ---
+            // 2P
             if (e.KeyCode == Keys.A) player2.SetMovingLeft(true);
             if (e.KeyCode == Keys.D) player2.SetMovingRight(true);
             if (e.KeyCode == Keys.W) player2.Jump();
@@ -203,33 +230,31 @@ namespace UCH_Project
                 this.Invalidate();
             }
 
-            // --- חלון שמירת משחק (Ctrl + S) ---
+            // To save use CTRL+S
             if (e.KeyCode == Keys.S && e.Control)
             {
                 using (SaveFileDialog saveFileDialog = new SaveFileDialog())
                 {
                     saveFileDialog.Filter = "Model Files (*.mdl)|*.mdl|All Files (*.*)|*.*";
-                    saveFileDialog.Title = "בחר היכן לשמור את השלב";
+                    saveFileDialog.Title = "Save the current level";
                     saveFileDialog.DefaultExt = "mdl";
 
-                    // אם המשתמש בחר נתיב ולחץ "שמור"
                     if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
                         LevelSerializer.SaveLevel(gameObjects, saveFileDialog.FileName);
-                        MessageBox.Show("השלב נשמר בהצלחה!");
+                        MessageBox.Show("Level successfully saved!");
                     }
                 }
             }
 
-            // --- חלון טעינת משחק (Ctrl + L) ---
+            // To load use CTRL + L
             if (e.KeyCode == Keys.L && e.Control)
             {
                 using (OpenFileDialog openFileDialog = new OpenFileDialog())
                 {
                     openFileDialog.Filter = "Model Files (*.mdl)|*.mdl|All Files (*.*)|*.*";
-                    openFileDialog.Title = "בחר קובץ שלב לטעינה";
+                    openFileDialog.Title = "Load Save File";
 
-                    // אם המשתמש בחר קובץ ולחץ "פתח"
                     if (openFileDialog.ShowDialog() == DialogResult.OK)
                     {
                         List<GameObject> loadedObjects = LevelSerializer.LoadLevel(openFileDialog.FileName);
@@ -238,7 +263,6 @@ namespace UCH_Project
                         {
                             gameObjects = loadedObjects;
 
-                            // מתוך קטע הטעינה ב-Form1
                             List<Player> loadedPlayers = new List<Player>();
                             foreach (GameObject obj in gameObjects)
                             {
@@ -253,7 +277,7 @@ namespace UCH_Project
                                 player2 = loadedPlayers[1];
                             }
 
-                            MessageBox.Show("השלב נטען בהצלחה!");
+                            MessageBox.Show("Save loaded successfully!");
                             this.Invalidate();
                         }
                     }
@@ -263,17 +287,36 @@ namespace UCH_Project
 
         private void Form1_KeyUp(object? sender, KeyEventArgs e)
         {
-            // --- שחקן 1 ---
+            // On KeyUp
             if (e.KeyCode == Keys.Left) player1.SetMovingLeft(false);
             if (e.KeyCode == Keys.Right) player1.SetMovingRight(false);
             if (e.KeyCode == Keys.Up) player1.WantsToJump = false;
 
-            // --- שחקן 2 ---
             if (e.KeyCode == Keys.A) player2.SetMovingLeft(false);
             if (e.KeyCode == Keys.D) player2.SetMovingRight(false);
             if (e.KeyCode == Keys.W) player2.WantsToJump = false;
         }
 
+        private void ReturnToMainMenu()
+        {
+            currentState = GameState.Menu;
+
+            // Clearing the memory
+            gameObjects.Clear();
+            partyBoxOptions.Clear();
+
+            // Returning everything back
+            isPartyBoxOpen = false;
+            isPlacingNewItem = false;
+            selectedObjectType = "";
+            previewX = -1;
+            previewY = -1;
+
+            StartButton.Visible = true;
+            LoadButton.Visible = true;
+
+            this.Invalidate();
+        }
 
         private void ResetRoundForNextBuilding()
         {
@@ -305,14 +348,14 @@ namespace UCH_Project
 
         private bool IsGridSlotOccupied(int x, int y, int width, int height)
         {
-            // יצירת מלבן שמייצג את המיקום והגודל המלא של האובייקט החדש שרוצים לבנות
+            // Creating a rectangle to see where you can build
             Rectangle newObjectRect = new Rectangle(x, y, width, height);
 
             foreach (GameObject obj in gameObjects)
             {
                 if (obj is Player) continue;
 
-                // שולפים את המידות האמיתיות של האובייקט הקיים במפה
+                // Getting the real width and height
                 int objW = 40;
                 int objH = 40;
 
@@ -327,30 +370,28 @@ namespace UCH_Project
                     objH = aObj.Height;
                 }
 
-                // יצירת מלבן הגבולות של האובייקט הקיים
+                // Creating bounds of the existing object
                 Rectangle existingObjBounds = new Rectangle(obj.X, obj.Y, objW, objH);
 
-                // בדיקה: האם המלבן של החפץ החדש מתנגש/חופף במקום כלשהו עם החפץ הקיים?
+                // Is the new object intersect with an existing object
                 if (newObjectRect.IntersectsWith(existingObjBounds))
                 {
-                    return true; // השטח תפוס (באחד החלקים של האובייקט החדש או הקיים)!
+                    return true; // Space is taken
                 }
             }
-            return false; // השטח פנוי לחלוטין לכל אורך ורוחב האובייקט
+            return false; // Can place the object
         }
 
         private void Form1_MouseDown(object? sender, MouseEventArgs e)
         {
+            // Build mode
             if (currentState == GameState.Building)
             {
-                // ==========================================
-                // שלב א': בחירת חפץ מה-Party Box
-                // ==========================================
                 if (isPartyBoxOpen)
                 {
                     if (e.Button == MouseButtons.Left)
                     {
-                        // שימוש בלולאת for מאפשר לנו למחוק איברים מהרשימה בבטחה
+                        // Deleting the items from the list
                         for (int i = 0; i < partyBoxOptions.Count; i++)
                         {
                             GameObject option = partyBoxOptions[i];
@@ -398,28 +439,25 @@ namespace UCH_Project
                                     selectedHeight = 40;
                                 }
 
-                                // מסירים את החפץ מהתיבה כדי שהשחקן השני יבחר ממה שנשאר
+                                // Deleting the item from the party box for the other player to build
                                 partyBoxOptions.RemoveAt(i);
 
-                                isPartyBoxOpen = false; // סוגרים את התיבה זמנית כדי למקם את החפץ
-                                isPlacingNewItem = true; // מסמנים שלקחנו חפץ חדש
+                                isPartyBoxOpen = false; 
+                                isPlacingNewItem = true;
 
                                 this.Invalidate();
                                 return;
                             }
                         }
                     }
-                    return; // התעלמות מלחיצות על הרקע של התיבה
+                    return;
                 }
 
-                // ==========================================
-                // שלב ב': בנייה או מחיקה על המפה עצמה
-                // ==========================================
-
+                // Actual building on the map
                 int snappedX = (e.X / gridSize) * gridSize;
                 int snappedY = (e.Y / gridSize) * gridSize;
 
-                // --- לוגיקת כפתור ימני (הזזת חפץ קיים) ---
+                // Right click - replace mode
                 if (e.Button == MouseButtons.Right)
                 {
                     Point clickPoint = e.Location;
@@ -460,7 +498,7 @@ namespace UCH_Project
                     return;
                 }
 
-                // --- לוגיקת כפתור שמאלי (הנחת חפץ) ---
+                // Left click - place mode
                 if (e.Button == MouseButtons.Left)
                 {
                     if (IsGridSlotOccupied(snappedX, snappedY, selectedWidth, selectedHeight))
@@ -485,13 +523,13 @@ namespace UCH_Project
 
                     selectedObjectType = "";
 
-                    // בדיקה אם הרגע הנחנו חפץ חדש שהוצאנו מהתיבה
+                    // Check if placed
                     if (isPlacingNewItem)
                     {
                         itemsPlacedThisRound++;
                         isPlacingNewItem = false;
 
-                        // אם זה השחקן הראשון שהניח, נפתח את התיבה מחדש לשחקן השני!
+                        // If the first player has placed his item, then its time for the second player
                         if (itemsPlacedThisRound < 2)
                         {
                             isPartyBoxOpen = true;
@@ -503,6 +541,7 @@ namespace UCH_Project
             }
         }
 
+        // Grid snap on building mode.
         private void Form1_MouseMove(object? sender, MouseEventArgs e)
         {
             if (currentState == GameState.Building && !string.IsNullOrEmpty(selectedObjectType))
@@ -525,6 +564,7 @@ namespace UCH_Project
             }
         }
 
+        // Party box random generation
         private void GeneratePartyBoxOptions()
         {
             partyBoxOptions.Clear();
@@ -535,7 +575,6 @@ namespace UCH_Project
 
             for (int i = 0; i < 3; i++)
             {
-                // שינוי ל-5 כדי לכלול את כל האפשרויות
                 int choice = rand.Next(5);
 
                 switch (choice)
@@ -552,7 +591,7 @@ namespace UCH_Project
                     case 3:
                         partyBoxOptions.Add(new ProjectileTrap(optionXs[i], boxY, 40, 40, 60, 7));
                         break;
-                    case 4: // הוספת המכשול הנע שיצרנו
+                    case 4:
                         partyBoxOptions.Add(new MovingHazard(optionXs[i], boxY, 40, 40, 3));
                         break;
                 }
@@ -565,9 +604,7 @@ namespace UCH_Project
         {
             gameObjects.Clear();
 
-            // שחקן 1 (כחול) - ישחק עם החצים
             player1 = new Player(100, 475, Brushes.Blue);
-            // שחקן 2 (ורוד) - ישחק עם WASD
             player2 = new Player(150, 475, Brushes.DeepPink);
 
             gameObjects.Add(player1);
@@ -577,10 +614,16 @@ namespace UCH_Project
             Platform startingGround = new Platform(40, 520, 200, 40, Platform.PlatformType.MetalFloor);
             gameObjects.Add(startingGround);
 
-            gameObjects.Add(new Goal(1400, 500, 40, 80));
+            Random rand = new Random();
+
+            int num = rand.Next(240, 440);
+            int snappedY = (num / 40) * 40;
+
+            gameObjects.Add(new Goal(1400, snappedY, 40, 80));
 
             currentState = GameState.Building;
             StartButton.Visible = false;
+            LoadButton.Visible = false;
 
             itemsPlacedThisRound = 0;
             isPlacingNewItem = false;
@@ -588,6 +631,52 @@ namespace UCH_Project
 
             this.Focus();
             this.Invalidate();
+        }
+
+        private void BtnLoad_Click(object? sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Model Files (*.mdl)|*.mdl|All Files (*.*)|*.*";
+                openFileDialog.Title = "Load Save File";
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    List<GameObject> loadedObjects = LevelSerializer.LoadLevel(openFileDialog.FileName);
+
+                    if (loadedObjects != null)
+                    {
+                        gameObjects = loadedObjects;
+
+                        List<Player> loadedPlayers = new List<Player>();
+                        foreach (GameObject obj in gameObjects)
+                        {
+                            if (obj is Player p)
+                            {
+                                loadedPlayers.Add(p);
+                            }
+                        }
+
+                        if (loadedPlayers.Count >= 2)
+                        {
+                            player1 = loadedPlayers[0];
+                            player2 = loadedPlayers[1];
+                        }
+
+                        StartButton.Visible = false;
+                        LoadButton.Visible = false;
+
+                        currentState = GameState.Building;
+
+                        itemsPlacedThisRound = 0;
+                        isPlacingNewItem = false;
+                        GeneratePartyBoxOptions();
+
+                        this.Focus();
+                        this.Invalidate();
+                    }
+                }
+            }
         }
     }
 }

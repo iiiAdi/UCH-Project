@@ -20,35 +20,34 @@ namespace UCH_Project.Classes
 
         public override void Update(List<GameObject> worldObjects, Size screenBounds)
         {
-            // 1. קידום המונה
+            // Cooldown counter
             cooldownCounter++;
 
-            // 2. בדיקה האם הגענו לזמן הירי
+            // If can fire
             if (cooldownCounter >= fireRate)
             {
-                // 3א. יצירת הקליע החדש. 
-                // הוא נוצר באמצע הגובה של המלכודת כדי להיראות כאילו הוא יוצא מה"קנה"
+                // Creating the projectile
                 Projectile newProjectile = new Projectile(
-                    this.X + (projectileSpeed > 0 ? this.Width : -10), // מיקום X לפי כיוון הירי
-                    this.Y + (this.Height / 2) - 5,                    // מיקום Y ממורכז
-                    10,                                                // רוחב הקליע
-                    10,                                                // גובה הקליע
-                    this.projectileSpeed                               // מהירות וכיוון
+                    this.X + (projectileSpeed > 0 ? this.Width : -10), // X position
+                    this.Y + (this.Height / 2) - 5,                    // Centering Y position
+                    10,                                                // Projectile Width
+                    10,                                                // Projectile Height
+                    this.projectileSpeed                               // Speed and direction
                 );
 
-                // 3ב. הוספת הקליע למשחק
+                // Add the projectile to the game objects
                 worldObjects.Add(newProjectile);
 
-                // 3ג. איפוס המונה
+                // Cooldown counter reseting
                 cooldownCounter = 0;
             }
         }
 
         public override void Draw(Graphics g)
         {
-            // ציור גוף המלכודת
+            // Paint the Trap
             g.FillRectangle(Brushes.DarkGray, X, Y, Width, Height);
-            // ציור הקנה כדי שיהיה ברור לאן המלכודת מכוונת
+            // Paint the nuzzle
             g.FillRectangle(Brushes.Black, X + (projectileSpeed > 0 ? Width : -10), Y + Height / 2 - 5, 10, 10);
         }
     }

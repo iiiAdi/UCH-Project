@@ -7,7 +7,7 @@ namespace UCH_Project.Classes
     public class Player : GameObject
     {
         public int Width { get; set; } = 40;
-        public int Height { get; set; } = 50;
+        public int Height { get; set; } = 40;
 
         private int moveSpeed = 6;
         private int jumpSpeed = 0;
@@ -40,7 +40,7 @@ namespace UCH_Project.Classes
         // Updates the movement of the player
         public override void Update(List<GameObject> worldObjects, Size screenBounds)
         {
-            // אם השחקן מת או ניצח, הוא מפסיק להיות מושפע מהפיזיקה ומהעולם
+            // If died, we stop using gravity and physics on the player
             if (IsDead || HasWonRound) return;
 
             if (IsLeft) X -= moveSpeed;
@@ -154,20 +154,11 @@ namespace UCH_Project.Classes
 
         public override void Draw(Graphics g)
         {
-            // שחקן שנפסל לא יצויר על המסך
+            // If died then won't be drawn
             if (IsDead) return;
 
-            // ציור השחקן לפי הצבע הייחודי שלו
+            // Painting the player in its color
             g.FillRectangle(PlayerColor, X, Y, Width, Height);
-        }
-
-        private void Respawn(Size screenBounds)
-        {
-            X = 100;
-            Y = 100;
-            jumpSpeed = 0;
-            IsOnGround = false;
-            IsJumping = false;
         }
     }
 }

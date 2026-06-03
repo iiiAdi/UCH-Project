@@ -9,10 +9,10 @@ namespace UCH_Project.Classes
     public class Platform : StaticObject
     {
         private Image platformImage;
-        public enum PlatformType { WoodHorizontal, WoodVertical , MetalBox, MetalFloor}
+        public enum PlatformType { WoodHorizontal, WoodVertical , MetalBox, MetalFloor} // Enums for easier management
 
         public PlatformType Type { get; private set; }
-        public Platform(int x, int y, int width, int height, PlatformType type): base(x, y, width, height)
+        public Platform(int x, int y, int width, int height, PlatformType type): base(x, y, width, height) // Constructor
         {
             this.Type = type;
 
@@ -36,7 +36,7 @@ namespace UCH_Project.Classes
             }
         }
 
-        public override void Draw(Graphics g)
+        public override void Draw(Graphics g) // Draw the object
         {
             if (platformImage != null)
             {

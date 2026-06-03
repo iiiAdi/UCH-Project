@@ -8,14 +8,13 @@ namespace UCH_Project.Classes
     {
         public Goal(int x, int y, int width, int height) : base(x, y, width, height)
         {
-            // אנו מבטלים את ההתנגשות הפיזיקלית כדי שהשחקן לא יעמוד על המטרה כמו על רצפה,
-            // אלא יוכל "להיכנס" לתוך השטח שלה כדי לנצח.
+            // Disabling collision so it won't bother the players entering it
             this.IsCollidable = false;
         }
 
         public override void Draw(Graphics g)
         {
-            // נצייר את המטרה בירוק בולט כדי שתהיה מזוהה, בהמשך תוכלו להחליף לתמונה של דגל
+            // Green Color so it's visible
             g.FillRectangle(Brushes.Green, X, Y, Width, Height);
         }
     }
